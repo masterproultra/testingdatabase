@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout - BlackArrow</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/css/intlTelInput.min.css"/>
+  <style>
+    /* [your original styles remain unchanged here] */
+    /* (for brevity, you can paste your full CSS here as-is) */
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="plan-summary">
+      <h3 id="planTitle">Selected Plan:</h3>
+      <p id="planPrice">Price:</p>
+    </div>
+
+    <form id="checkoutForm" novalidate>
+      <input type="text" name="firstName" placeholder="First Name" />
+      <input type="text" name="lastName" placeholder="Last Name" />
+      <input type="email" name="email" placeholder="Email Address" />
+      <select id="country" name="country">
+        <option value="">Select Country</option>
+        <option value="US">United States</option>
+        <option value="GB">United Kingdom</option>
+        <option value="CA">Canada</option>
+        <option value="NG">Nigeria</option>
+        <option value="IN">India</option>
+        <option value="DE">Germany</option>
+        <option value="FR">France</option>
+        <option value="ZA">South Africa</option>
+        <option value="BR">Brazil</option>
+        <option value="PH">Philippines</option>
+        <option value="PK">Pakistan</option>
+        <option value="AU">Australia</option>
+      </select>
+      <input id="phone" type="tel" name="phone" placeholder="Phone Number" maxlength="10" />
+      <select id="platform" name="platform">
+        <option value="">Select Platform</option>
+        <option value="metatrader5">MetaTrader 5</option>
+        <option value="metatrader4">MetaTrader 4</option>
+        <option value="marchtrader">MarchTrader</option>
+      </select>
+      <select id="blockchainSelect" name="blockchain">
+        <option value="">Select Blockchain</option>
+        <option value="bsc">BSC (BEP20)</option>
+        <option value="trc20">TRC20</option>
+        <option value="ethereum">Ethereum (ERC20)</option>
+      </select>
+      <div class="input-group">
+        <input type="password" name="password" id="password" placeholder="Create Password" minlength="8" />
+        <span class="toggle-password" onclick="togglePassword('password', this)">👁️</span>
+      </div>
+      <div class="input-group">
+        <input type="password" name="retypePassword" id="retypePassword" placeholder="Retype Password" minlength="8" />
+        <span class="toggle-password" onclick="togglePassword('retypePassword', this)">👁️</span>
+      </div>
+      <button type="submit" class="submit-btn">Pay with Crypto</button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/intlTelInput.min.js"></script>
+  <script>
+    // Initialize plan display
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get('plan') || 'Unknown';
+    const price = params.get('price') || '0';
+    document.getElementById('planTitle').textContent = `Selected Plan: ${plan}`;
+    document.getElementById('planPrice').textContent = `Price: $${price}`;
+
+    // Phone input setup
+    const phoneInput = document.querySelector("#phone");
+    const countrySelect = document.getElementById("country");
+    const iti = window.intlTelInput(phoneInput, {
+      separateDialCode: true,
+      initialCountry: "us",
+      allowDropdown: false,
+      autoHideDialCode: false,
+      nationalMode: false,
+      utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js"
+    });
+
+    countrySelect.addEventListener("change", function () {
+      const selectedCountry = this.value.toLowerCase();
+      if (selectedCountry) {
+        iti.setCountry(selectedCountry);
+      }
+    });
+
+    // Toggle password visibility
+    function togglePassword(id, el) {
+      const input = document.getElementById(id);
+      input.type = input.type === "password" ? "text" : "password";
+      el.textContent = input.type === "password" ? "👁️" : "🙈";
+    }
+
+    // Submit form and send to Google Sheets
+    document.getElementById("checkoutForm").addEventListener("submit", function (event) {
+      event.preventDefault(); // Stop normal form behavior
+
+      const form = event.target;
+      const fields = form.querySelectorAll("input, select");
+      let allValid = true;
+
+      fields.forEach(field => {
+        if (!field.value.trim()) {
+          field.classList.add("error");
+          allValid = false;
+        } else {
+          field.classList.remove("error");
+        }
+      });
+
+      if (form.password.value.length < 8) {
+        form.password.classList.add("error");
+        allValid = false;
+      }
+
+      if (!allValid) return;
+
+      const formData = {
+        firstName: form.firstName.value,
+        lastName: form.lastName.value,
+        email: form.email.value,
+        country: form.country.value,
+        phone: form.phone.value,
+        platform: form.platform.value,
+        blockchain: form.blockchain.value
+      };
+
+      // 🔁 Replace below with your deployed Apps Script URL
+      fetch("YOUR_WEB_APP_URL", {
+        method: "POST",
+        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(response => response.text())
+      .then(data => {
+        alert("Form submitted successfully!");
+        form.reset();
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        alert("Something went wrong!");
+      });
+    });
+  </script>
+</body>
+</html>
